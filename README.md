@@ -26,4 +26,10 @@ Question -> Vector Database -> Ranked Results -> LLM -> Answer
 
 # Deploying app on EC2
 1. Update Github variables including EC2_SSH_KEY - Get private key from ~/.ssh/ec2_deploy_key in local
-2.
+2. Created new Target group for the app
+3. Update HTTPS listener of the existing ALB to use the new target group
+4. Create new ACM certificate for the domain
+5. Add certificate to the ALB
+  - From AWS Docs, The certificate selection is handled by SNI, not by the rules. As long as both certificates are added to the listener and the hostnames match, it will work automatically.
+6. Update security group of the EC2 to allow inbound traffic from the ALB security group
+7. Update the DNS record of the domain to point to the ALB
