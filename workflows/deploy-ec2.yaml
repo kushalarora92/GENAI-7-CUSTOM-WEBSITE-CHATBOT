@@ -1,0 +1,71 @@
+name: Deploy to EC2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+      - 'templates/**'
+      - 'Dockerfile'
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+  IMAGE_NAME: ai7-custom-website-chatbot
+  APP_DIR: ai7-custom-website-chatbot
+  APP_PORT: 8007
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_SA_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get EC2 IP Address
+        id: get-ip
+        run: |
+          EC2_IP=$(aws ec2 describe-instances \
+            --instance-ids ${{ env.EC2_INSTANCE_ID }} \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+          echo "ip=$EC2_IP" >> $GITHUB_OUTPUT
+          echo "Instance IP: $EC2_IP"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          # Use the raw key directly (no base64 decoding)
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ steps.get-ip.outputs.ip }} >> ~/.ssh/known_hosts
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} > image.tar
+
+      - name: Deploy to EC2
+        run: |
+          # Add verbose flag for debugging
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ steps.get-ip.outputs.ip }} 'mkdir -p ~/${{ env.APP_DIR }}'
+          scp -v -i ~/.ssh/id_rsa image.tar deploy.sh ec2-user@${{ steps.get-ip.outputs.ip }}:~/${{ env.APP_DIR }}/
+          ssh -v -i ~/.ssh/id_rsa ec2-user@${{ steps.get-ip.outputs.ip }} "cd ~/${{ env.APP_DIR }} && bash -e deploy.sh ${{ env.IMAGE_NAME }} ${{ github.sha }} ${{ env.APP_PORT }}"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f image.tar
+          rm -f ~/.ssh/id_rsa
