@@ -27,8 +27,8 @@ echo "Starting new container..."
 docker run -d \
   --name ${IMAGE_NAME} \
   --restart unless-stopped \
+  --env-file ./.env \
   -p ${APP_PORT}:${APP_PORT} \
-  -e OPENAI_API_KEY=$OPENAI_API_KEY \
   -v ~/static:/app/static \
   ${IMAGE_NAME}:${IMAGE_TAG}
 

@@ -7,6 +7,9 @@ import uvicorn
 import os
 
 from src import generate_response
+from src.llama_pinecone import generate_response as generate_response_llama
+# TODO: Import Falcon generate_response when implemented
+# from src.falcon_chrome import generate_response as generate_response_falcon
 
 app = FastAPI()
 
@@ -14,6 +17,7 @@ templates = Jinja2Templates(directory="templates")
 
 class ChatRequest(BaseModel):
     message: str
+    model: str
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -21,7 +25,15 @@ async def index(request: Request):
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    answer = generate_response(request.message)
+    if request.model == "openai":
+        answer = generate_response(request.message)
+    elif request.model == "llama":
+        answer = generate_response_llama(request.message)
+    elif request.model == "falcon":
+        # TODO: Implement Falcon response
+        answer = "Falcon model not yet implemented"
+    else:
+        answer = "Invalid model selection"
     return {"response": answer}
 
 if __name__ == "__main__":

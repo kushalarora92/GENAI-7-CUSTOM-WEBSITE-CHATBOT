@@ -223,6 +223,36 @@
             0%, 100% { opacity: 0.3; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.2); }
         }
+
+        .model-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .model-select {
+            padding: 10px;
+            border-radius: 8px;
+            background-color: var(--accent-color);
+            border: none;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .model-select:hover {
+            background-color: #2980b9;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+
+        .model-select option {
+            background-color: white;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -236,6 +266,13 @@
 
     <!-- Main Content -->
     <div class="main-content">
+        <div class="model-selector">
+            <select id="modelSelect" class="model-select">
+                <option value="openai">OpenAI with Faiss</option>
+                <option value="llama">Llama with Pinecone</option>
+                <option value="falcon">Falcon with ChromeDB</option>
+            </select>
+        </div>
         <div class="landing-container">
             <img src="https://images.squarespace-cdn.com/content/v1/613aea5684c780048e12fc7b/104145d3-a027-4b2c-9044-da01c29f231d/roll_roll_logo.jpeg?format=1500w" 
                  alt="Nubo Roll & Roll Logo" 
@@ -328,6 +365,8 @@
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
+            const modelSelect = document.getElementById('modelSelect');
+            const selectedModel = modelSelect.value;
             
             if (!message) return;
             
@@ -360,7 +399,10 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ 
+                        message: message,
+                        model: selectedModel 
+                    })
                 });
 
                 const data = await response.json();
