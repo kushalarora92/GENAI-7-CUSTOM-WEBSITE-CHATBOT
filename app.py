@@ -7,9 +7,6 @@ import uvicorn
 import os
 
 from src import generate_response
-from src.llama_pinecone import generate_response as generate_response_llama
-# TODO: Import Falcon generate_response when implemented
-# from src.falcon_chrome import generate_response as generate_response_falcon
 
 app = FastAPI()
 
@@ -28,10 +25,9 @@ async def chat(request: ChatRequest):
     if request.model == "openai":
         answer = generate_response(request.message)
     elif request.model == "llama":
-        answer = generate_response_llama(request.message)
+        answer = "Use ai8.breezemytrip.com for Llama"
     elif request.model == "falcon":
-        # TODO: Implement Falcon response
-        answer = "Falcon model not yet implemented"
+        answer = "Use ai8.breezemytrip.com for Falcon"
     else:
         answer = "Invalid model selection"
     return {"response": answer}

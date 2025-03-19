@@ -16,6 +16,12 @@ docker rm ${IMAGE_NAME} || true
 echo "Loading new image..."
 docker load < image.tar
 
+# Check if .env file exists
+if [ ! -f .env ]; then
+    echo "Error: .env file not found!"
+    exit 1
+fi
+
 # Ensure static directory exists with proper permissions
 echo "Setting up static directory..."
 mkdir -p ~/static/docs

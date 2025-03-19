@@ -269,8 +269,8 @@
         <div class="model-selector">
             <select id="modelSelect" class="model-select">
                 <option value="openai">OpenAI with Faiss</option>
-                <option value="llama">Llama with Pinecone</option>
-                <option value="falcon">Falcon with ChromeDB</option>
+                <option value="llama" disabled>Llama with Pinecone (Use ai8.breezemytrip.com)</option>
+                <option value="falcon" disabled>Falcon with ChromeDB (Use ai8.breezemytrip.com)</option>
             </select>
         </div>
         <div class="landing-container">
@@ -453,6 +453,17 @@
         document.getElementById('userInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
+            }
+        });
+
+        // Handle non-OpenAI option selection
+        document.getElementById('modelSelect').addEventListener('change', function(e) {
+            if (e.target.value !== 'openai') {
+                // Get current domain and replace subdomain
+                const domain = window.location.hostname.split('.').slice(1).join('.');
+                window.open(`https://ai8.${domain}`, '_blank');
+                // Reset selection to openai
+                e.target.value = 'openai';
             }
         });
 
